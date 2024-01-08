@@ -2,7 +2,7 @@
 
 This is a hot pile of programming garbage created in three days
 
-##Everything in this projects was created completely by me except for the following:
+## Everything in this projects was created completely by me except for the following:
 # these were created automatically by jsfxr at sfxr.me 
 -DialogSound.wav
 -EndingSound.wav
