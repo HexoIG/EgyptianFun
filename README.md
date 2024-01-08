@@ -9,9 +9,9 @@ This is a hot pile of programming garbage created in three days
 -ExplosionSound.wav
 -SelectionSound.wav
 # these were created by my brother
-MainCharacterStill.png
-Alien.png
-UFOSpin.png
+-MainCharacterStill.png
+-Alien.png
+-UFOSpin.png
 
 ## The Programs/Websites used:
 -sfxr.me (8-bit audios)
