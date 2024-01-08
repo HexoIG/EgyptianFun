@@ -21,7 +21,7 @@ private:
 	sf::Sprite sprite;
 
 public:
-	const int text_scale = 3;
+	int text_scale = 3;
 	const int line_spacing = 6;
 	int x = 0;
 	int y = 0;

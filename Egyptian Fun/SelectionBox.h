@@ -1,5 +1,6 @@
 #pragma once
 
+#include <SFML/Audio.hpp>
 #include "TextDrawer.h"
 
 class SelectionBox
@@ -13,6 +14,13 @@ private:
 	sf::RectangleShape response_rect;
 	sf::RectangleShape outline_rect;
 	TextDrawer text_drawer;
+
+	sf::SoundBuffer dialog_buffer;
+	sf::Sound dialog_sound;
+	sf::SoundBuffer selection_buffer;
+	sf::Sound selection_sound;
+	sf::SoundBuffer click_buffer;
+	sf::Sound click_sound;
 
 	std::vector<int> selection_lines;
 	std::string text = "";

@@ -22,6 +22,16 @@ SelectionBox::SelectionBox(int x, int bottom_y)
 	outline_rect.setOutlineColor(sf::Color::Black);
 	outline_rect.setOutlineThickness(4);
 
+	dialog_buffer.loadFromFile("ResourceFiles/Audio/DialogSound.wav");
+	dialog_sound.setBuffer(dialog_buffer);
+	dialog_sound.setVolume(8);
+	selection_buffer.loadFromFile("ResourceFiles/Audio/SelectionSound.wav");
+	selection_sound.setBuffer(selection_buffer);
+	selection_sound.setVolume(10);
+	click_buffer.loadFromFile("ResourceFiles/Audio/EndingSound.wav");
+	click_sound.setBuffer(click_buffer);
+	click_sound.setVolume(15);
+
 	updateSelectionBox();
 }
 
@@ -69,12 +79,16 @@ void SelectionBox::drawSelectionBox(sf::RenderWindow* window, int frame)
 
 	window->draw(response_rect);
 	window->draw(rect);
-	text_drawer.x = x + width / 2 - 15 * text_drawer.text_scale;
+	text_drawer.x = x + width / 2 - 17 * text_drawer.text_scale + 1;
 	text_drawer.y = bottom_y - line_count * text_drawer.text_scale * 6 - padding - 13 * text_drawer.text_scale;
-	text_drawer.drawText(window, "RESPONSE", 0);
+	text_drawer.drawText(window, "RESPONSES", 0);
 
 	if (frame - starting_frame < 0) { return; }
 
+	if (text_index <= text.length() && frame % 3 == 0)
+	{
+		dialog_sound.play();
+	}
 	text_index = (frame - starting_frame) / typing_interval;
 	drawCurrentText(window, frame);
 
@@ -94,6 +108,7 @@ void SelectionBox::updateSelection(sf::RenderWindow* window)
 	if (!checkIfInRectSelection(mouse_position, x + padding, bottom_y - rect.getLocalBounds().height + padding, x + width, bottom_y - padding - 1)) { selected = -1; return; }
 
 	int current_y = 0;
+	int last_selected = selected;
 	for (int i = 0; i < selection_lines.size(); i++)
 	{
 		if (mouse_position.y < current_y * text_drawer.text_scale * 6 + (text_drawer.text_scale * 6 * selection_lines[i]) + bottom_y - rect.getLocalBounds().height + padding)
@@ -105,6 +120,8 @@ void SelectionBox::updateSelection(sf::RenderWindow* window)
 
 		if (current_y == line_count) { selected = -1; return; }
 	}
+
+	if (last_selected != selected) { selection_sound.play(); }
 	
 	outline_rect.setPosition(
 		x + padding - 4, 
@@ -117,5 +134,6 @@ void SelectionBox::updateSelection(sf::RenderWindow* window)
 	if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
 	{
 		clicking = true;
+		click_sound.play();
 	}
 }

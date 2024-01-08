@@ -17,6 +17,14 @@ Dialog::Dialog(int x, int y)
 	rect.setOutlineThickness(4);
 	rect.setSize(sf::Vector2f(width, height));
 
+	sound_buffer.loadFromFile("ResourceFiles/Audio/DialogSound.wav");
+	sound.setBuffer(sound_buffer);
+	sound.setVolume(9);
+
+	click_buffer.loadFromFile("ResourceFiles/Audio/SelectionSound.wav");
+	click_sound.setBuffer(click_buffer);
+	click_sound.setVolume(11);
+
 	updateDialog();
 }
 
@@ -61,6 +69,14 @@ void Dialog::drawDialog(sf::RenderWindow* window, int frame)
 
 	if (frame - starting_frame < 0) { return; }
 
+	if (
+		!(dialog[dialog_index] == ' ' && dialog[dialog_index - 1] == ' ') && 
+		dialog_index <= dialog.length() && 
+		frame % 4 == 0
+		)
+	{
+		sound.play();
+	}
 	dialog_index = (frame - starting_frame) / typing_interval;
 	drawCurrentDialog(window);
 
@@ -73,6 +89,7 @@ void Dialog::drawDialog(sf::RenderWindow* window, int frame)
 		if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && checkIfInRectDialog(sf::Mouse::getPosition(*window), x, y, x + width, y + height))
 		{
 			skipped = true;
+			click_sound.play();
 		}
 	}
 }

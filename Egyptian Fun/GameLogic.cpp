@@ -1,9 +1,11 @@
 #include "GameLogic.h"
 
-GameLogic::GameLogic()
-{
-}
+#include <SFML/Audio.hpp>
 
+bool checkIfInRectLogic(sf::Vector2i vec2, int x, int y, int left, int bottom)
+{
+	return (vec2.x > x && vec2.x < left && vec2.y > y && vec2.y < bottom);
+}
 
 //---------// HARD CODED GAME LOGIC //---------//
 
@@ -11,6 +13,13 @@ void GameLogic::updateGame(sf::RenderWindow* window, double* frame_p)
 {
 	int frame = (int)*frame_p;
 
+	static bool hamburger_ending = false;
+	static bool toenail_ending = false;
+	static bool true_ending = false;
+
+	static bool game_started = false;
+	static int game_started_frame = -1;
+	static int ending_frame = -1;
 	static int calls = 0;
 	static int last_frame = 0;
 	static int conversation_state = 0;
@@ -23,12 +32,44 @@ void GameLogic::updateGame(sf::RenderWindow* window, double* frame_p)
 	static AnimatedSprite main_character_still = AnimatedSprite("MainCharacterStill", 13, 25, 1);
 	static AnimatedSprite main_character_walk = AnimatedSprite("MainCharacterWalk", 13, 25, 4);
 	static AnimatedSprite ufo_spin = AnimatedSprite("UFOSpin", 16, 16, 3);
+	static sf::RectangleShape start_rect = sf::RectangleShape(sf::Vector2f(300, 100));
+	static TextDrawer start_text_drawer = TextDrawer();
 	std::vector<int> ints;
+
+	static AnimatedSprite true_t = AnimatedSprite("True", 8, 8, 1);
+	static AnimatedSprite hamburger_t = AnimatedSprite("Burger", 8, 8, 1);
+	static AnimatedSprite toenail_t = AnimatedSprite("Toenail", 8, 8, 1);
+
+	static sf::SoundBuffer opening_song_buffer;
+	static sf::SoundBuffer explosion_buffer;
+	static sf::SoundBuffer ending_buffer;
+
+	static sf::Sound opening_song;
+	static sf::Sound explosion_sound;
+	static sf::Sound ending_sound;
+
 
 	calls++;
 
 	if (calls == 1)
 	{
+		opening_song_buffer.loadFromFile("ResourceFiles/Audio/EgyptianFunOpeningSong.wav");
+		explosion_buffer.loadFromFile("ResourceFiles/Audio/ExplosionSound.wav");
+		ending_buffer.loadFromFile("ResourceFiles/Audio/EndingSound.wav");
+
+		opening_song.setBuffer(opening_song_buffer);
+		explosion_sound.setBuffer(explosion_buffer);
+		ending_sound.setBuffer(ending_buffer);
+
+		start_rect.setPosition(128 * 4 - 150, 96 * 4 - 50);
+		start_rect.setOutlineColor(sf::Color::Black);
+		start_rect.setOutlineThickness(4);
+		start_text_drawer.text_scale = 5;
+		start_text_drawer.x = 128 * 4 - 150 + 51;
+		start_text_drawer.y = 96 * 4 - 50 + 44;
+
+		ending_rect.setOutlineColor(sf::Color::Black);
+		ending_rect.setOutlineThickness(4);
 		dialog.typing_interval = 6;
 
 		main_character_walk.animation_interval = 17;
@@ -40,25 +81,104 @@ void GameLogic::updateGame(sf::RenderWindow* window, double* frame_p)
 		ufo_spin.scale = 4;
 		ufo_spin.x = 800;
 		ufo_spin.animation_interval = 10;
+
+		text_drawer.x = 12;
+		text_drawer.y = 6;
+
+		true_t.scale = 3;
+		true_t.x = 12;
+		true_t.y = 32;
+
+		toenail_t.scale = 3;
+		toenail_t.x = 48;
+		toenail_t.y = 32;
+
+		hamburger_t.scale = 3;
+		hamburger_t.x = 84;
+		hamburger_t.y = 32;
 	}
 
-	background_drawer.drawBackground(window);
+	if (game_started_frame == -1 && game_started == false)
+	{
+		background_drawer.drawBackground(window);
+		window->draw(start_rect);
+		start_text_drawer.drawText(window, "start game", 0);
 
-	if (frame > 264)
-	{
-		main_character_still.draw(window, frame);
-	}
-	if (frame > 1550)
-	{
-		ufo_spin.draw(window, frame);
+		if (
+			sf::Mouse::isButtonPressed(sf::Mouse::Left) &&
+			checkIfInRectLogic(sf::Mouse::getPosition(*window), 128 * 4 - 150, 96 * 4 - 50, 128 * 4 - 150 + 300, 96 * 4 - 50 + 100)
+			)
+		{
+			game_started_frame = frame;
+			opening_song.setVolume(70);
+			opening_song.play();
+		}
 	}
 
-	if (response == -1)
+	if (game_started_frame != -1 && game_started == false)
 	{
-		selection_box.updateSelection(window);
+		background_drawer.drawBackground(window);
+		text_drawer.drawText(window, "ENDINGS", 0);
+		ending_rect.setPosition(8, 28);
+		window->draw(ending_rect);
+		ending_rect.setPosition(44, 28);
+		window->draw(ending_rect);
+		ending_rect.setPosition(80, 28);
+		window->draw(ending_rect);
+		if (frame >= game_started_frame + 184)
+		{
+			game_started = true;
+			game_started_frame = -1;
+			*frame_p = 0;
+			frame = 0;
+		}
 	}
+
+	if (game_started == false) { return; }
+
+	if (ending_frame == -1)
+	{
+		background_drawer.drawBackground(window);
+
+		if (frame > 264)
+		{
+			main_character_still.draw(window, frame);
+		}
+		if (frame > 1550)
+		{
+			ufo_spin.draw(window, frame);
+		}
+
+		if (response == -1)
+		{
+			selection_box.updateSelection(window);
+		}
 	
-	selection_box.drawSelectionBox(window, frame);
+		selection_box.drawSelectionBox(window, frame);
+
+		text_drawer.drawText(window, "ENDINGS", 0);
+		ending_rect.setPosition(8, 28);
+		window->draw(ending_rect);
+		ending_rect.setPosition(44, 28);
+		window->draw(ending_rect);
+		ending_rect.setPosition(80, 28);
+		window->draw(ending_rect);
+
+		if (true_ending)
+		{
+			true_t.draw(window, frame);
+		}
+
+		if (toenail_ending)
+		{
+			toenail_t.draw(window, frame);
+		}
+
+		if (hamburger_ending)
+		{
+			hamburger_t.draw(window, frame);
+		}
+	}
 	dialog.drawDialog(window, frame);
 
 
@@ -113,7 +233,7 @@ void GameLogic::updateGame(sf::RenderWindow* window, double* frame_p)
 
 	else if (last_frame < 1600 && frame >= 1600)
 	{
-		dialog.typing_interval = 4;
+		dialog.typing_interval = 3;
 		dialog.active = true;
 		dialog.show_next = false;
 		dialog.setNewDialog("Alien", "Hey human is it cool if we destroy your\nentire planet", frame);
@@ -304,9 +424,26 @@ void GameLogic::updateGame(sf::RenderWindow* window, double* frame_p)
 			next_answer_state = -1;
 		}
 		
-		if (dialog.skipped)
+		if (dialog.skipped && ending_frame != -1)
 		{
+			dialog.active = false;
+			ending_frame = -1;
 			*frame_p = 1551;
+		}
+		else if (dialog.skipped && ending_frame == -1)
+		{
+			ending_frame = frame;
+			dialog.active = false;
+			explosion_sound.play();
+		}
+
+		if (ending_frame != -1)
+		{
+			if (frame >= ending_frame + 100 && last_frame < ending_frame + 100)
+			{
+				dialog.active = true;
+				dialog.setNewDialog("EMPTY", "The Earth was blown to smithereens\nby the alien spaceship.              \nno survivors.\n              restarting game...", frame);
+			}
 		}
 	}
 	
@@ -394,9 +531,26 @@ void GameLogic::updateGame(sf::RenderWindow* window, double* frame_p)
 			next_answer_state = -1;
 		}
 
-		if (dialog.skipped)
+		if (dialog.skipped && ending_frame != -1)
 		{
+			dialog.active = false;
+			ending_frame = -1;
 			*frame_p = 1551;
+		}
+		else if (dialog.skipped && ending_frame == -1)
+		{
+			ending_frame = frame;
+			dialog.active = false;
+			explosion_sound.play();
+		}
+
+		if (ending_frame != -1)
+		{
+			if (frame >= ending_frame + 100 && last_frame < ending_frame + 100)
+			{
+				dialog.active = true;
+				dialog.setNewDialog("EMPTY", "The Earth was violently blown to\nsmithereens by the alien spaceship.              \nno survivors.\n              restarting game...", frame);
+			}
 		}
 	}
 	
@@ -415,9 +569,26 @@ void GameLogic::updateGame(sf::RenderWindow* window, double* frame_p)
 			next_answer_state = -1;
 		}
 
-		if (dialog.skipped)
+		if (dialog.skipped && ending_frame != -1)
 		{
+			dialog.active = false;
+			ending_frame = -1;
 			*frame_p = 1551;
+		}
+		else if (dialog.skipped && ending_frame == -1)
+		{
+			ending_frame = frame;
+			dialog.active = false;
+			explosion_sound.play();
+		}
+
+		if (ending_frame != -1)
+		{
+			if (frame >= ending_frame + 100 && last_frame < ending_frame + 100)
+			{
+				dialog.active = true;
+				dialog.setNewDialog("EMPTY", "The Earth was blown to smithereens\nby the alien spaceship.              \nno survivors.\n              restarting game...", frame);
+			}
 		}
 	}
 	
@@ -554,9 +725,26 @@ void GameLogic::updateGame(sf::RenderWindow* window, double* frame_p)
 			next_answer_state = -1;
 		}
 
-		if (dialog.skipped)
+		if (dialog.skipped && ending_frame != -1)
 		{
+			dialog.active = false;
+			ending_frame = -1;
 			*frame_p = 1551;
+		}
+		else if (dialog.skipped && ending_frame == -1)
+		{
+			ending_frame = frame;
+			dialog.active = false;
+			explosion_sound.play();
+		}
+
+		if (ending_frame != -1)
+		{
+			if (frame >= ending_frame + 100 && last_frame < ending_frame + 100)
+			{
+				dialog.active = true;
+				dialog.setNewDialog("EMPTY", "The Earth was blown to smithereens\nby the alien spaceship.              \nno survivors.\n              restarting game...", frame);
+			}
 		}
 	}
 	
@@ -575,9 +763,27 @@ void GameLogic::updateGame(sf::RenderWindow* window, double* frame_p)
 			next_answer_state = -1;
 		}
 
-		if (dialog.skipped)
+		if (dialog.skipped && ending_frame != -1)
 		{
+			dialog.active = false;
+			ending_frame = -1;
 			*frame_p = 1551;
+			hamburger_ending = true;
+		}
+		else if (dialog.skipped && ending_frame == -1)
+		{
+			ending_frame = frame;
+			dialog.active = false;
+			ending_sound.play();
+		}
+
+		if (ending_frame != -1)
+		{
+			if (frame >= ending_frame + 100 && last_frame < ending_frame + 100)
+			{
+				dialog.active = true;
+				dialog.setNewDialog("EMPTY", "HAMBGURGER ENDING              \nThe alien left and never returned after\nrealizing your similarities.\n              restarting game...", frame);
+			}
 		}
 	}
 	
@@ -656,7 +862,7 @@ void GameLogic::updateGame(sf::RenderWindow* window, double* frame_p)
 	{
 		if (skip_num == 2)
 		{
-			dialog.setNewDialog("Alien", "TRANSLATED\nyour being mean now. i already said i wasnt\ngonna do it. you know what. maybe i will do\nit just because you are being so mean. ", frame);
+			dialog.setNewDialog("Alien", "TRANSLATED\nyour being mean now. i already said i wasnt\ngonna do it.         \nyou know what nevermind.", frame);
 			dialog.language_type = 0;
 			dialog.show_next = true;
 			skip_num = 0;
@@ -666,9 +872,26 @@ void GameLogic::updateGame(sf::RenderWindow* window, double* frame_p)
 			next_answer_state = -1;
 		}
 
-		if (dialog.skipped)
+		if (dialog.skipped && ending_frame != -1)
 		{
+			dialog.active = false;
+			ending_frame = -1;
 			*frame_p = 1551;
+		}
+		else if (dialog.skipped && ending_frame == -1)
+		{
+			ending_frame = frame;
+			dialog.active = false;
+			explosion_sound.play();
+		}
+
+		if (ending_frame != -1)
+		{
+			if (frame >= ending_frame + 100 && last_frame < ending_frame + 100)
+			{
+				dialog.active = true;
+				dialog.setNewDialog("EMPTY", "The Earth was blown to smithereens\nby the alien spaceship.              \nno survivors.\n              restarting game...", frame);
+			}
 		}
 	}
 	
@@ -795,7 +1018,7 @@ void GameLogic::updateGame(sf::RenderWindow* window, double* frame_p)
 	else if (answer_state == 16)
 	{
 		std::string alien_says = "alright. the deal is that you cannot let\nanyone know that i was here. as far as\neveryone knows you made these pyramids.";
-		if (talking_frame != -1 && frame >= talking_frame + 350)
+		if (talking_frame != -1 && frame >= talking_frame + 450)
 		{
 			ints.clear();
 			ints = { 1 };
@@ -858,9 +1081,26 @@ void GameLogic::updateGame(sf::RenderWindow* window, double* frame_p)
 			next_answer_state = -1;
 		}
 
-		if (dialog.skipped)
+		if (dialog.skipped && ending_frame != -1)
 		{
+			dialog.active = false;
+			ending_frame = -1;
 			*frame_p = 1551;
+		}
+		else if (dialog.skipped && ending_frame == -1)
+		{
+			ending_frame = frame;
+			dialog.active = false;
+			explosion_sound.play();
+		}
+
+		if (ending_frame != -1)
+		{
+			if (frame >= ending_frame + 100 && last_frame < ending_frame + 100)
+			{
+				dialog.active = true;
+				dialog.setNewDialog("EMPTY", "The Earth was blown to smithereens\nby the alien spaceship.              \nno survivors.\n              restarting game...", frame);
+			}
 		}
 	}
 
@@ -879,12 +1119,30 @@ void GameLogic::updateGame(sf::RenderWindow* window, double* frame_p)
 			next_answer_state = -1;
 		}
 
-		if (dialog.skipped)
+		if (dialog.skipped && ending_frame != -1)
 		{
+			dialog.active = false;
+			ending_frame = -1;
 			*frame_p = 1551;
+		}
+		else if (dialog.skipped && ending_frame == -1)
+		{
+			ending_frame = frame;
+			dialog.active = false;
+			explosion_sound.play();
+		}
+
+		if (ending_frame != -1)
+		{
+			if (frame >= ending_frame + 100 && last_frame < ending_frame + 100)
+			{
+				dialog.active = true;
+				dialog.setNewDialog("EMPTY", "The Earth was blown to smithereens\nby the alien spaceship.              \nno survivors.\n              restarting game...", frame);
+			}
 		}
 	}
 
+	// TOENAIL ENDING
 	else if (answer_state == 19)
 	{
 		if (skip_num == 2)
@@ -899,9 +1157,27 @@ void GameLogic::updateGame(sf::RenderWindow* window, double* frame_p)
 			next_answer_state = -1;
 		}
 
-		if (dialog.skipped)
+		if (dialog.skipped && ending_frame != -1)
 		{
+			dialog.active = false;
+			ending_frame = -1;
 			*frame_p = 1551;
+			toenail_ending = true;
+		}
+		else if (dialog.skipped && ending_frame == -1)
+		{
+			ending_frame = frame;
+			dialog.active = false;
+			ending_sound.play();
+		}
+
+		if (ending_frame != -1)
+		{
+			if (frame >= ending_frame + 100 && last_frame < ending_frame + 100)
+			{
+				dialog.active = true;
+				dialog.setNewDialog("EMPTY", "TOENAIL ENDING    \nyour toenails were violently ripped off and\nyou died.   \n              restarting game...", frame);
+			}
 		}
 	}
 
@@ -920,9 +1196,27 @@ void GameLogic::updateGame(sf::RenderWindow* window, double* frame_p)
 			next_answer_state = -1;
 		}
 
-		if (dialog.skipped)
+		if (dialog.skipped && ending_frame != -1)
 		{
+			dialog.active = false;
+			ending_frame = -1;
 			*frame_p = 1551;
+			true_ending = true;
+		}
+		else if (dialog.skipped && ending_frame == -1)
+		{
+			ending_frame = frame;
+			dialog.active = false;
+			ending_sound.play();
+		}
+
+		if (ending_frame != -1)
+		{
+			if (frame >= ending_frame + 100 && last_frame < ending_frame + 100)
+			{
+				dialog.active = true;
+				dialog.setNewDialog("EMPTY", "TRUE ENDING              \nThe alien left Earth and never returned\nafter making that deal.\n              restarting game...", frame);
+			}
 		}
 	}
 

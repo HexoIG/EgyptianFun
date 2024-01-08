@@ -1,6 +1,7 @@
 #pragma once
 
 #include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 #include "TextDrawer.h"
 
 class Dialog
@@ -8,9 +9,13 @@ class Dialog
 private:
 	const int width = 16 * 40;
 	const int height = 16 * 6;
-	const int speaker_image_side_length = 19 * 4;
-	const int speaker_image_scale = 4;
+	int speaker_image_scale = 4;
 	const sf::Color fill_color = sf::Color::White;
+
+	sf::SoundBuffer sound_buffer;
+	sf::Sound sound;
+	sf::SoundBuffer click_buffer;
+	sf::Sound click_sound;
 
 	std::string speaker;
 	std::string dialog;
@@ -27,6 +32,7 @@ private:
 	void drawCurrentDialog(sf::RenderWindow* window);
 
 public:
+	int speaker_image_side_length = 19 * 4;
 	bool show_next = false;
 	bool skipped = false;
 	bool active = false;
